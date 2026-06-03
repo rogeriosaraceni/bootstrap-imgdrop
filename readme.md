@@ -1,154 +1,244 @@
 # bootstrap-imgdrop.js
 
-jQuery plugin for image upload with drag & drop and Bootstrap 5.
+Um plugin jQuery leve, moderno e responsivo para upload de imagens utilizando arrastar e soltar (**Drag & Drop**), totalmente integrado ao **Bootstrap 5** e **Bootstrap Icons**.
 
-## Dependencies
+![Versão](https://img.shields.io/badge/version-2.0.0-blue)
+![Licença](https://img.shields.io/badge/license-MIT-green)
 
-- jQuery 3.7+
-- Bootstrap 5
-- Bootstrap Icons
+---
 
-## Installation
+## 🚀 Recursos
 
-Include the dependencies and the plugin in your HTML:
+- 🖱️ **Drag & Drop real:** Arraste imagens diretamente para a zona de upload.
+- 🖼️ **Preview em Tempo Real:** Criação de miniaturas instantâneas através de URLs de objetos locais seguros (`URL.createObjectURL`).
+- 🔒 **Validações robustas de segurança:**
+  - Controle de quantidade máxima de arquivos.
+  - Filtro por tamanho máximo em MB.
+  - Validação rigorosa por extensões permitidas.
+- 🌐 **Suporte a Internacionalização (i18n):** Tradução nativa configurável e isolada em arquivos externos.
+- 🛠️ **Componentes Nativos:** Tooltips integrados utilizando a API oficial do Bootstrap 5.
+- 🧹 **Gerenciamento de Memória:** Limpeza automática de cache (`URL.revokeObjectURL`) ao remover imagens.
+
+---
+
+## 📦 Dependências
+
+Certifique-se de incluir as seguintes dependências em seu projeto:
+
+- **jQuery** (v3.7+)
+- **Bootstrap 5** (CSS e Bundle JS com Popper.js incluído)
+- **Bootstrap Icons** (v1.11+)
+
+---
+
+## 🛠️ Instalação e Estrutura
+
+### 1. Estrutura HTML Recomendada
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+<div class="upload-zone" id="imageUpload">
+    <article data-bs-imgdrop="dropZone">
+        <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 text-secondary">
+            <i class="bi bi-file-earmark-image fs-5"></i>
+            <span>Arraste e solte suas imagens aqui ou</span>
 
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-<script src="bootstrap-imgdrop.js"></script>
-```
-
-## HTML Structure
-
-Use `data-bs-imgdrop` attributes to wire up the plugin elements:
-
-```html
-<form data-bs-imgdrop="form">
-    <div class="upload-zone" data-bs-imgdrop="dropZone">
-        <div>
-            <i class="bi bi-file-earmark-image"></i>
-            <span>Drag and drop your images here or</span>
-            <button type="button" data-bs-imgdrop="selectBtn">Select images</button>
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                data-bs-imgdrop="selectBtn">
+                Selecione as imagens
+            </button>
         </div>
 
-        <small data-bs-imgdrop="hint"></small>
-
-        <input type="file" data-bs-imgdrop="fileInput" accept="image/*" multiple style="display:none">
-
-        <small class="text-danger" data-bs-imgdrop="errMsg" role="alert"></small>
-        <div data-bs-imgdrop="imgGrid"></div>
-        <small data-bs-imgdrop="counter" style="display:none">
-            <span data-bs-imgdrop="countNum">0</span>/3 images selected
+        <small
+            class="text-secondary d-block mt-1"
+            data-bs-imgdrop="hint">
         </small>
-    </div>
 
-    <button type="submit">Submit</button>
-</form>
+        <input
+            type="file"
+            data-bs-imgdrop="fileInput"
+            accept="image/*"
+            multiple
+            style="display:none">
+
+        <div class="mt-2">
+            <small
+                class="text-danger d-block mb-2"
+                data-bs-imgdrop="errMsg"
+                role="alert">
+            </small>
+
+            <div
+                data-bs-imgdrop="imgGrid"
+                class="img-grid mb-2">
+            </div>
+
+            <small
+                class="text-secondary"
+                data-bs-imgdrop="counter"
+                style="display:none">
+
+                <span data-bs-imgdrop="countNum">0</span>
+                arquivos selecionados
+            </small>
+        </div>
+    </article>
+</div>
 ```
 
-## Usage
+---
 
-### Basic
-
-```javascript
-$('[data-bs-imgdrop="form"]').imgDrop();
-```
-
-### With options
+### 2. Inicialização do Plugin
 
 ```javascript
-$('[data-bs-imgdrop="form"]').imgDrop({
-    max:        5,
-    maxSize:    5242880,
-    extensions: ["jpg", "png"],
+$('#imageUpload').imgDrop({
+    lang: 'pt-BR',
+    max: 3,
+    maxSize: 10485760, // 10 MB
+    extensions: ["jpg", "jpeg", "png", "svg", "heic"],
 
-    onUploadSuccess: (response) => console.log("Success:", response),
-    onUploadError:   (xhr)      => console.error("Error:", xhr),
+    onChange: (images) => {
+        console.log("Imagens atualmente carregadas:", images);
+    }
 });
 ```
 
-## Options
+---
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `max` | `number` | `3` | Maximum number of images |
-| `maxSize` | `number` | `10485760` | Maximum file size in bytes (default 10 MB) |
-| `extensions` | `array` | `["jpg", "jpeg", "png", "svg", "heic"]` | Allowed file extensions |
-| `inputName` | `string` | `"images[]"` | Name attribute of the file input |
-| `mock` | `boolean` | `false` | Enable mock upload for local testing |
-| `mockDelay` | `number` | `1000` | Mock upload delay in milliseconds |
-| `mockSuccess` | `number` | `0.7` | Mock success rate (0 to 1) |
-| `onUploadSuccess` | `function` | `null` | Callback on upload success |
-| `onUploadError` | `function` | `null` | Callback on upload error |
+## ⚙️ Opções de Configuração
 
-## Messages
+| Parâmetro | Tipo | Padrão | Descrição |
+|-----------|------|---------|-----------|
+| `max` | Number | `1` | Quantidade máxima de imagens permitidas na instância. |
+| `maxSize` | Number | `10485760` | Tamanho máximo permitido por arquivo (em bytes). |
+| `extensions` | Array | `["jpg","jpeg","png","svg","heic"]` | Extensões de arquivos aceitas. |
+| `inputName` | String | `"images[]"` | Atributo `name` aplicado dinamicamente ao input. |
+| `lang` | String | `"en"` | Idioma padrão das mensagens. |
+| `onChange` | Function | `null` | Callback executado ao adicionar ou remover imagens. |
 
-All messages are customizable via the `messages` option:
+---
+
+## 🕹️ API Pública
+
+Você pode acessar os métodos da instância do plugin através do `.data()` do jQuery.
+
+### Recuperando a Instância
 
 ```javascript
-$('[data-bs-imgdrop="form"]').imgDrop({
-    messages: {
-        limitReached:  (max)        => `Limit of ${max} images reached.`,
-        limitExceeded: (slots)      => `Only ${slots} image(s) added. Limit reached.`,
-        invalidExt:    (name, exts) => `"${name}" has an invalid extension. Allowed: ${exts}`,
-        sizeExceeded:  (name, mb)   => `"${name}" exceeds ${mb} MB.`,
-        noneSelected:  ()           => "No image selected.",
-        uploadError:   ()           => "Upload failed. Please try again.",
-        tooltipRemove: ()           => "Remove",
-        tooltipZoom:   ()           => "Zoom",
-        hint: (exts, mb, max)       => `${exts.join(", ").toUpperCase()} · max ${mb} MB per file · up to ${max} images`,
-    },
+const instance = $('#imageUpload').data('imgDrop');
+```
+
+---
+
+### getImages()
+
+Retorna um array contendo todas as imagens atualmente carregadas.
+
+```javascript
+const arquivos = instance.getImages();
+
+console.log(arquivos);
+```
+
+Retorno:
+
+```javascript
+[
+    {
+        id: 1,
+        src: "blob:https://...",
+        name: "imagem.jpg",
+        file: File
+    }
+]
+```
+
+---
+
+### clearAll()
+
+Remove todas as imagens carregadas, limpa os contadores e libera os recursos de memória.
+
+```javascript
+instance.clearAll();
+```
+
+---
+
+### destroy()
+
+Destrói completamente a instância do plugin e remove seus eventos.
+
+```javascript
+instance.destroy();
+```
+
+---
+
+## 🌐 Internacionalização (i18n)
+
+Você pode criar novos idiomas adicionando traduções ao objeto global:
+
+```javascript
+$.fn.imgDrop.locales["pt-BR"] = {
+    limitReached: (max) =>
+        `Limite de ${max} imagens atingido.`,
+
+    limitExceeded: (slots) =>
+        `Apenas ${slots} imagem(ns) foram adicionadas. Limite excedido.`,
+
+    invalidExt: (name, exts) =>
+        `"${name}" possui uma extensão inválida. Permitidos: ${exts}`,
+
+    sizeExceeded: (name, mb) =>
+        `"${name}" excede o tamanho máximo de ${mb} MB.`,
+
+    noneSelected: () =>
+        "Nenhuma imagem selecionada.",
+
+    tooltipRemove: () =>
+        "Remover",
+
+    tooltipZoom: () =>
+        "Ampliar",
+
+    hint: (exts, mb, max) =>
+        `${exts.join(", ").toUpperCase()} · Máx ${mb} MB · Até ${max} imagem(ns)`
+};
+```
+
+Exemplo de estrutura:
+
+```text
+i18n/
+├── bootstrap-imgdrop.en.js
+├── bootstrap-imgdrop.pt-BR.js
+├── bootstrap-imgdrop.es.js
+└── bootstrap-imgdrop.fr.js
+```
+
+---
+
+## 📄 Licença
+
+Distribuído sob a licença **MIT**.
+
+Consulte o arquivo **LICENSE** para mais informações.
+
+---
+
+## 👨‍💻 Exemplo Completo
+
+```javascript
+$('#imageUpload').imgDrop({
+    lang: 'pt-BR',
+    max: 5,
+    maxSize: 5242880,
+    extensions: ['jpg', 'jpeg', 'png'],
+
+    onChange(images) {
+        console.log(images);
+    }
 });
 ```
-
-## Selectors
-
-All selectors can be customized via the `selectors` option. Useful when running multiple instances on the same page:
-
-```javascript
-$('[data-bs-imgdrop="form"]').imgDrop({
-    selectors: {
-        dropZone:  '[data-bs-imgdrop="dropZone"]',
-        fileInput: '[data-bs-imgdrop="fileInput"]',
-        selectBtn: '[data-bs-imgdrop="selectBtn"]',
-        imgGrid:   '[data-bs-imgdrop="imgGrid"]',
-        errMsg:    '[data-bs-imgdrop="errMsg"]',
-        counter:   '[data-bs-imgdrop="counter"]',
-        countNum:  '[data-bs-imgdrop="countNum"]',
-        hint:      '[data-bs-imgdrop="hint"]',
-    },
-});
-```
-
-## Mock Upload
-
-Enable mock mode for local testing without a backend. The `mockSuccess` option controls the success rate (0 to 1):
-
-```javascript
-$('[data-bs-imgdrop="form"]').imgDrop({
-    mock: true,
-
-    onUploadSuccess: (response) => alert("Upload successful!"),
-    onUploadError:   (xhr)      => alert("Upload failed."),
-});
-```
-
-To simulate a specific scenario:
-
-```javascript
-// Always succeeds
-$('[data-bs-imgdrop="form"]').imgDrop({ mock: true, mockSuccess: 1 });
-
-// Always fails
-$('[data-bs-imgdrop="form"]').imgDrop({ mock: true, mockSuccess: 0 });
-
-// 50/50
-$('[data-bs-imgdrop="form"]').imgDrop({ mock: true, mockSuccess: 0.5 });
-```
-
-## License
-
-MIT © [Rogério Saraceni](https://github.com/rogeriosaraceni)
