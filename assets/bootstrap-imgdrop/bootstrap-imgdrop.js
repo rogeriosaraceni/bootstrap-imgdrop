@@ -13,7 +13,8 @@
 
     const DEFAULTS = {
         max:        1,
-        maxSize:    10485760,
+        maxSize: 10485760,
+        maxHeight: 350,
         extensions: ["jpg", "jpeg", "png", "svg", "heic"],
         inputName:  "images[]",
         lang:       "en", // Idioma padrão nativo
@@ -128,7 +129,11 @@
         const tipZoom   = this.opts.messages.tooltipZoom();
         const tipRemove = this.opts.messages.tooltipRemove();
 
-        const $card = $("<div>").addClass("img-card").attr("data-id", id).html(`
+        const $card = $("<div>")
+            .addClass("img-card")
+            .attr("data-id", id)
+            .css("max-height", `${this.opts.maxHeight}px`)
+            .html(`
             <img src="${src}" alt="${name}" title="${name}">
             <button type="button" class="btn-zoom" data-bs-toggle="tooltip" data-bs-title="${tipZoom}">
                 <i class="bi bi-zoom-in"></i>

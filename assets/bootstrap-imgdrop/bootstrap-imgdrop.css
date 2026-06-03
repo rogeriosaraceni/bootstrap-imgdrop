@@ -23,15 +23,16 @@
 }
 
 .img-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 1rem;
 }
 .img-card {
     position: relative;
     border-radius: var(--bs-border-radius);
     overflow: hidden;
-    aspect-ratio: 1
+    aspect-ratio: 1;
 }
 .img-card img {
     width: 100%;
