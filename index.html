@@ -1,66 +1,77 @@
 <!doctype html>
 <html lang="pt-br">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>bootstrap-imgdrop</title>
 
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-        <link rel="stylesheet" href="./assets/bootstrap-imgdrop/bootstrap-imgdrop.css"> 
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>bootstrap-imgdrop</title>
 
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    </head>
+    <link rel="stylesheet" href="./assets/libs/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
-    <body>
-        <section class="container py-4">
-            <div class="card">
-                <div class="card-body">
-                    <div class="card-title">Select Files</div>
+    <link rel="stylesheet" href="./assets/bootstrap-imgdrop/bootstrap-imgdrop.css">
+    <link rel="stylesheet" href="./assets/magnific-popup/magnific-popup.css" />
+    <link rel="stylesheet" href="./assets/magnific-popup/magnific-popup-custom.css" />
 
-                    <form enctype="multipart/form-data" action="">
-                        <div class="upload-zone" id="example">
-                            <article data-bs-imgdrop="dropZone">
-                                <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 text-secondary">
-                                    <i class="bi bi-file-earmark-image fs-5"></i>
-                                    <span>Arraste e solte suas imagens aqui ou</span>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-imgdrop="selectBtn">Selecione as imagens</button>
-                                </div>
-                                <small class="text-secondary" data-bs-imgdrop="hint"></small>
-                                <input type="file" data-bs-imgdrop="fileInput" name="images[]" accept="image/*" multiple required style="display:none">
+    <script src="./assets/libs/jquery.min.js"></script>
+    <script src="./assets/libs/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="./assets/magnific-popup/jquery.magnific-popup.min.js"></script>
+    <script src="./assets/magnific-popup/jquery.magnific-popup-init.js" defer></script>
+</head>
 
-                                <div class="mt-1">
-                                    <small class="text-danger" data-bs-imgdrop="errMsg" role="alert"></small>
-                                    <div data-bs-imgdrop="imgGrid" class="img-grid mb-2"></div>
-                                    <small class="text-secondary" data-bs-imgdrop="counter" style="display:none">
-                                        <span data-bs-imgdrop="countNum">0</span>/3
-                                    </small>
-                                </div>
-                            </article>
-                        </div>
+<body>
+    <section class="container py-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="card-title">Select Files</div>
 
-                        <button type="submit" class="btn btn-primary mt-3">Submit</button>
-                    </form> 
-                </div>
+                <form enctype="multipart/form-data" action="">
+                    <div class="upload-zone" id="example">
+                        <article data-bs-imgdrop="dropZone">
+                            <div
+                                class="d-flex flex-wrap justify-content-center align-items-center gap-2 text-secondary">
+                                <i class="bi bi-file-earmark-image fs-5"></i>''
+                                <span>Arraste e solte suas imagens aqui ou</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    data-bs-imgdrop="selectBtn">
+                                    Selecione as imagens
+                                </button>
+                            </div>
+                            <small class="text-secondary" data-bs-imgdrop="hint"></small>
+                            <input type="file" data-bs-imgdrop="fileInput" name="images[]" accept="image/*" multiple
+                                required style="display:none">
+
+                            <div class="mt-1">
+                                <div data-bs-imgdrop="imgGrid" class="img-grid mb-2"></div>
+                                <small class="text-secondary" data-bs-imgdrop="counter" style="display:none">
+                                    <span data-bs-imgdrop="countNum">0</span>/3
+                                </small>
+                            </div>
+                        </article>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary mt-3">Submit</button>
+                </form>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <script src="./assets/bootstrap-imgdrop/bootstrap-imgdrop.js"></script>
-        <script src="./assets/bootstrap-imgdrop/i18n/bootstrap-imgdrop.pt-BR.js"></script>
+    <script src="./assets/bootstrap-imgdrop/bootstrap-imgdrop.js"></script>
+    <script src="./assets/bootstrap-imgdrop/i18n/bootstrap-imgdrop.pt-BR.js"></script>
 
-        <script>
-            $('#example').imgDrop({
-                lang:       'pt-BR',
-                max:        3,
-                maxSize:    10485760, // 10 MB
-                maxHeight:  350,
-                extensions: ["jpg", "jpeg", "png", "svg", "heic"],
+    <script>
+        $('#example').imgDrop({
+            lang: 'pt-BR',
+            max: 3,
+            maxSize: 10485760, // 10 MB
+            maxHeight: 350,
+            extensions: ["jpg", "jpeg", "png", "svg", "heic"],
 
-                onChange(images) {
-                    console.log(images);
-                }
-            });        
-        </script>
-    </body>
+            onChange(images) {
+                console.log(images);
+            }
+        });
+    </script>
+</body>
+
 </html>

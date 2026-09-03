@@ -12,41 +12,47 @@
     "use strict";
 
     const DEFAULTS = {
-        max:        1,
+        max: 1,
         maxSize: 10485760,
         maxHeight: 350,
         extensions: ["jpg", "jpeg", "png", "svg", "heic"],
-        inputName:  "images[]",
-        lang:       "en", // Idioma padrão nativo
+        inputName: "images[]",
+        lang: "en", // Idioma padrão nativo
 
         selectors: {
-            dropZone:  '[data-bs-imgdrop="dropZone"]',
+            dropZone: '[data-bs-imgdrop="dropZone"]',
             fileInput: '[data-bs-imgdrop="fileInput"]',
             selectBtn: '[data-bs-imgdrop="selectBtn"]',
-            imgGrid:   '[data-bs-imgdrop="imgGrid"]',
-            errMsg:    '[data-bs-imgdrop="errMsg"]',
-            counter:   '[data-bs-imgdrop="counter"]',
-            countNum:  '[data-bs-imgdrop="countNum"]',
-            hint:      '[data-bs-imgdrop="hint"]',
+            imgGrid: '[data-bs-imgdrop="imgGrid"]',
+            errMsg: '[data-bs-imgdrop="errMsg"]',
+            counter: '[data-bs-imgdrop="counter"]',
+            countNum: '[data-bs-imgdrop="countNum"]',
+            hint: '[data-bs-imgdrop="hint"]',
         },
 
-        messages:   null, // Será preenchido no construtor com base no idioma
-        onChange:   null,
+        messages: null, // Será preenchido no construtor com base no idioma
+        onChange: null,
     };
 
     function ImgDrop(container, options) {
         // 1. Descobre qual idioma foi pedido (padrão é 'en')
         const chosenLang = (options && options.lang) || DEFAULTS.lang;
-        
+
         // 2. Pega as mensagens do idioma no repositório global do plugin (definido lá embaixo)
         const activeLocale = $.fn.imgDrop.locales[chosenLang] || $.fn.imgDrop.locales["en"];
 
         // 3. Mescla tudo, garantindo que o 'messages' receba a tradução correta
-        this.opts      = $.extend(true, {}, DEFAULTS, { messages: activeLocale }, options);
-        this.$el       = $(container);
-        this.images    = [];
-        this.extsReg   = new RegExp(`\\.(${this.opts.extensions.join("|")})$`, "i");
-        this.maxMB     = (this.opts.maxSize / (1024 * 1024)).toFixed(0);
+        this.opts = $.extend(true, {}, DEFAULTS, { messages: activeLocale }, options);
+
+        // normaliza "sem limite"
+        if (this.opts.max === 0 || this.opts.max === null || this.opts.max === "unlimited") {
+            this.opts.max = Infinity;
+        }
+
+        this.$el = $(container);
+        this.images = [];
+        this.extsReg = new RegExp(`\\.(${this.opts.extensions.join("|")})$`, "i");
+        this.maxMB = (this.opts.maxSize / (1024 * 1024)).toFixed(0);
 
         this._initRefs();
         this._bindEvents();
@@ -60,23 +66,26 @@
     ImgDrop.prototype._initRefs = function () {
         const s = this.opts.selectors;
 
-        this.$dropZone  = this._find(s.dropZone);
+        this.$dropZone = this._find(s.dropZone);
         this.$fileInput = this._find(s.fileInput);
-        this.$imgGrid   = this._find(s.imgGrid);
-        this.$errMsg    = this._find(s.errMsg);
-        this.$counter   = this._find(s.counter);
-        this.$countNum  = this._find(s.countNum);
+        this.$imgGrid = this._find(s.imgGrid);
+        this.$errMsg = this._find(s.errMsg);
+        this.$counter = this._find(s.counter);
+        this.$countNum = this._find(s.countNum);
+        this.$selectBtn = this._find(s.selectBtn);
 
         this.$fileInput.attr("name", this.opts.inputName);
 
-        this._find(s.hint).text(
-            this.opts.messages.hint(this.opts.extensions, this.maxMB, this.opts.max)
-        );
+        // Guarda o texto original do botão (ex: "Selecione as imagens")
+        // para poder restaurá-lo depois que sair do estado de limite atingido.
+        this.btnDefaultText = this.$selectBtn.text().trim();
+
+        this._find(s.hint).text(this.opts.messages.hint(this.opts.extensions, this.maxMB, this.opts.max));
     };
 
     ImgDrop.prototype._bindEvents = function () {
         const self = this;
-        const s    = this.opts.selectors;
+        const s = this.opts.selectors;
 
         this._find(s.selectBtn).on("click", () => self.$fileInput.trigger("click"));
 
@@ -86,8 +95,11 @@
         });
 
         this.$dropZone
-            .on("dragover", (e) => { e.preventDefault(); self.$dropZone.addClass("drag-over"); })
-            .on("dragleave", ()  => self.$dropZone.removeClass("drag-over"))
+            .on("dragover", (e) => {
+                e.preventDefault();
+                self.$dropZone.addClass("drag-over");
+            })
+            .on("dragleave", () => self.$dropZone.removeClass("drag-over"))
             .on("drop", (e) => {
                 e.preventDefault();
                 self.$dropZone.removeClass("drag-over");
@@ -104,56 +116,103 @@
         this._setErr("");
 
         const slots = this.opts.max - this.images.length;
-        if (slots <= 0) { this._setErr(msg.limitReached(this.opts.max)); return; }
+        if (slots <= 0) {
+            this._setErr(msg.limitReached(this.opts.max));
+            return;
+        }
 
         let added = 0;
-        for (const file of files) {
-            if (added >= slots) { this._setErr(msg.limitExceeded(slots)); break; }
-            if (!this.extsReg.test(file.name))     { this._setErr(msg.invalidExt(file.name, this.opts.extensions.join(", "))); continue; }
-            if (file.size > this.opts.maxSize)      { this._setErr(msg.sizeExceeded(file.name, this.maxMB)); continue; }
-            if (!file.type.match("image.*"))        continue;
+        let hadError = false;
 
-            const id  = Date.now() + Math.random();
+        for (const file of files) {
+            if (added >= slots) {
+                this._setErr(msg.limitExceeded(slots));
+                hadError = true;
+                break;
+            }
+            if (!this.extsReg.test(file.name)) {
+                this._setErr(msg.invalidExt(file.name, this.opts.extensions.join(", ")));
+                hadError = true;
+                continue;
+            }
+            if (file.size > this.opts.maxSize) {
+                this._setErr(msg.sizeExceeded(file.name, this.maxMB));
+                hadError = true;
+                continue;
+            }
+            if (!file.type.match("image.*")) continue;
+
+            const id = Date.now() + Math.random();
             const src = URL.createObjectURL(file);
             this.images.push({ id, src, name: file.name, file });
             this._renderCard({ id, src, name: file.name });
             added++;
         }
 
+        // Avisa assim que bater no máximo, mesmo sem nenhum erro de validação
+        if (!hadError && this.opts.max !== Infinity && this.images.length >= this.opts.max) {
+            this._setErr(msg.limitReached(this.opts.max));
+        }
+
         this._updateCounter();
+        this._updateSelectBtnLabel();
         this._fireChange();
     };
 
     ImgDrop.prototype._renderCard = function ({ id, src, name }) {
         const self = this;
-        const tipZoom   = this.opts.messages.tooltipZoom();
+        const tipZoom = this.opts.messages.tooltipZoom();
         const tipRemove = this.opts.messages.tooltipRemove();
 
-        const $card = $("<div>")
-            .addClass("img-card")
-            .attr("data-id", id)
-            .css("max-height", `${this.opts.maxHeight}px`)
-            .html(`
+        const $card = $("<div>").addClass("img-card").attr("data-id", id).css("max-height", `${this.opts.maxHeight}px`).html(`
             <img src="${src}" alt="${name}" title="${name}">
-            <button type="button" class="btn-zoom" data-bs-toggle="tooltip" data-bs-title="${tipZoom}">
+            <button type="button" class="btn-zoom zoom-gallery" data-source="${src}" data-bs-toggle="tooltip" data-bs-title="${tipZoom}">
                 <i class="bi bi-zoom-in"></i>
             </button>
+
             <button type="button" class="btn-del" data-bs-toggle="tooltip" data-bs-title="${tipRemove}">
                 <i class="bi bi-x-circle-fill"></i>
             </button>
         `);
 
         const $btnZoom = $card.find(".btn-zoom");
-        const $btnDel  = $card.find(".btn-del");
+        const $btnDel = $card.find(".btn-del");
 
         this.$imgGrid.append($card);
 
         const tooltipZoom = new bootstrap.Tooltip($btnZoom[0]);
-        const tooltipDel  = new bootstrap.Tooltip($btnDel[0]);
+        const tooltipDel = new bootstrap.Tooltip($btnDel[0]);
 
         $btnZoom.on("click", () => {
             tooltipZoom.hide();
             tooltipDel.hide();
+
+            const items = self.images.map((img) => ({
+                src: img.src,
+            }));
+
+            const index = self.images.findIndex((img) => img.id === id);
+
+            $.magnificPopup.open(
+                {
+                    items: items,
+
+                    gallery: {
+                        enabled: true,
+                    },
+
+                    zoom: {
+                        enabled: true,
+                        duration: 300,
+                        opener: function () {
+                            return $card.find("img");
+                        },
+                    },
+
+                    type: "image",
+                },
+                index,
+            );
         });
 
         $btnDel.on("click", () => {
@@ -168,23 +227,38 @@
 
         const $card = this.$imgGrid.find(`.img-card[data-id="${id}"]`);
         if ($card.length) {
-            const btnDel  = $card.find(".btn-del")[0];
+            const btnDel = $card.find(".btn-del")[0];
             const btnZoom = $card.find(".btn-zoom")[0];
-            
-            if (btnDel)  bootstrap.Tooltip.getInstance(btnDel)?.dispose();
+
+            if (btnDel) bootstrap.Tooltip.getInstance(btnDel)?.dispose();
             if (btnZoom) bootstrap.Tooltip.getInstance(btnZoom)?.dispose();
-            
+
             $card.remove();
         }
 
         this._setErr("");
         this._updateCounter();
+        this._updateSelectBtnLabel();
         this._fireChange();
     };
 
     ImgDrop.prototype._updateCounter = function () {
         this.$countNum.text(this.images.length);
         this.$counter.css("display", this.images.length ? "block" : "none");
+    };
+
+    // Alterna o texto do botão "selectBtn" entre o padrão do HTML
+    // e a mensagem de limite atingido, sem usar disabled.
+    ImgDrop.prototype._updateSelectBtnLabel = function () {
+        const { messages: msg } = this.opts;
+
+        if (this.opts.max !== Infinity && this.images.length >= this.opts.max) {
+            this.$selectBtn.text(msg.selectBtnLimitReached());
+            this.$selectBtn.addClass("disabled");
+        } else {
+            this.$selectBtn.text(this.btnDefaultText);
+            this.$selectBtn.removeClass("disabled");
+        }
     };
 
     // Expõe a lista atual para quem precisar (ex: coleta antes do POST externo)
@@ -195,11 +269,13 @@
     };
 
     // API pública — acesso via $.data(el, 'imgDrop').getImages()
-    ImgDrop.prototype.getImages  = function () { return [...this.images]; };
-    ImgDrop.prototype.clearAll   = function () {
+    ImgDrop.prototype.getImages = function () {
+        return [...this.images];
+    };
+    ImgDrop.prototype.clearAll = function () {
         [...this.images].forEach((img) => this._removeImage(img.id));
     };
-    ImgDrop.prototype.destroy    = function () {
+    ImgDrop.prototype.destroy = function () {
         this.clearAll();
         this.$el.removeData("imgDrop");
     };
@@ -215,15 +291,18 @@
     // Aqui fica o inglês nativo, direto no core do seu plugin
     $.fn.imgDrop.locales = {
         en: {
-            limitReached:  (max)        => `Limit of ${max} images reached.`,
-            limitExceeded: (slots)      => `Only ${slots} image(s) added. Limit reached.`,
-            invalidExt:    (name, exts) => `"${name}" has an invalid extension. Allowed: ${exts}`,
-            sizeExceeded:  (name, mb)   => `"${name}" exceeds ${mb} MB.`,
-            noneSelected:  ()           => "No image selected.",
-            tooltipRemove: ()           => "Remove",
-            tooltipZoom:   ()           => "Zoom",
-            hint: (exts, mb, max)       => `${exts.join(", ").toUpperCase()} · max ${mb} MB · up to ${max} image(s)`,
-        }
+            limitReached: (max) => `Limit of ${max} images reached.`,
+            limitExceeded: (slots) => `Only ${slots} image(s) added. Limit reached.`,
+            invalidExt: (name, exts) => `"${name}" has an invalid extension. Allowed: ${exts}`,
+            sizeExceeded: (name, mb) => `"${name}" exceeds ${mb} MB.`,
+            noneSelected: () => "No image selected.",
+            tooltipRemove: () => "Remove",
+            tooltipZoom: () => "Zoom",
+            selectBtnLimitReached: () => "Limit reached",
+            hint: (exts, mb, max) =>
+                max === Infinity
+                    ? `${exts.join(", ").toUpperCase()} · max ${mb} MB · no limit on images`
+                    : `${exts.join(", ").toUpperCase()} · max ${mb} MB · up to ${max} image(s)`,
+        },
     };
-
-}(jQuery));
+})(jQuery);
