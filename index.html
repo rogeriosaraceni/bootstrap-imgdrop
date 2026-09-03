@@ -30,7 +30,7 @@
                         <article data-bs-imgdrop="dropZone">
                             <div
                                 class="d-flex flex-wrap justify-content-center align-items-center gap-2 text-secondary">
-                                <i class="bi bi-file-earmark-image fs-5"></i>''
+                                <i class="bi bi-file-earmark-image fs-5"></i>
                                 <span>Arraste e solte suas imagens aqui ou</span>
                                 <button type="button" class="btn btn-sm btn-outline-secondary"
                                     data-bs-imgdrop="selectBtn">
@@ -62,7 +62,7 @@
     <script>
         $('#example').imgDrop({
             lang: 'pt-BR',
-            max: 3,
+            max: 3, // ou Infinity
             maxSize: 10485760, // 10 MB
             maxHeight: 350,
             extensions: ["jpg", "jpeg", "png", "svg", "heic"],
